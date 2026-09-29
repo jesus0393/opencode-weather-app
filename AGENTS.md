@@ -6,14 +6,15 @@ Documentación funcional (menú esperado, endpoints) en `README.md` (en español
 ## Comandos
 
 ```bash
-bun run index.ts            # ejecutar
+bun run start              # ejecutar
+bun run dev                # ejecutar con recarga automática
+bun run build              # binario
 bunx tsc --noEmit          # typecheck (única verificación disponible)
-bun build --compile index.ts --outfile weather   # binario
 ```
 
 ## Restricciones del repo
 
-- **Bun, no Node.** No hay `node_modules` scripts: `package.json` no define `scripts`. Usa `bun run <file>`, nunca `npm run`.
+- **Bun, no Node.** No uses `npm run`: los scripts de `package.json` están pensados para `bun run`.
 - **TypeScript 7** como peer dep (`typescript@^7`, binario nativo en `@typescript/typescript-linux-x64`).
 - **No hay framework de test, linter ni formatter configurados.** No inventes comandos de test/lint; verifica con `bunx tsc --noEmit`.
 - `tsconfig.json`: `noUncheckedIndexedAccess: true` → el acceso a índices/records devuelve `T | undefined`. Manejalo explícitamente.
