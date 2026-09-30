@@ -14,7 +14,7 @@ const CODES = {
 
 export type ColorName = keyof typeof CODES;
 
-type Paint = (text: string) => string;
+export type Paint = (text: string) => string;
 
 // Sin terminal (pipe a un archivo, otro script) los escapes ensucian la salida,
 // así que se desactivan. NO_COLOR es el estándar https://no-color.org y FORCE_COLOR

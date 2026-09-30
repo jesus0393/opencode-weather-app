@@ -1,8 +1,9 @@
-import type { City, Config } from "../types.ts";
+import type { City } from "../types/City.ts";
+import type { Config } from "../types/Config.ts";
 
 // Operaciones puras sobre la configuración: reciben un Config y devuelven uno nuevo.
-// La identidad de una ciudad es el `id` de GeoNames, no su posición, para que el
-// default sobreviva a reordenamientos y eliminaciones.
+// Sin I/O, para que las acciones y el storage puedan depender de ellas sin arrastrar
+// el disco.
 
 export function resolveDefaultCityId(cities: City[], preferredId: number | null): number | null {
   return cities.find((city) => city.id === preferredId)?.id ?? cities[0]?.id ?? null;
