@@ -3,6 +3,9 @@ import type { City, Unit, Weather } from "../types.ts";
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 const CURRENT_FIELDS = "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m";
+// Suficientes para desambiguar nombres muy repetidos (Springfield, Mexico) sin
+// desbordar una terminal de 80 columnas.
+const GEOCODING_RESULTS = 5;
 const REQUEST_TIMEOUT_MS = 10_000;
 
 interface GeocodingResult {
@@ -50,25 +53,24 @@ async function fetchJson<T>(url: string): Promise<T> {
   }
 }
 
-export async function geocodeCity(query: string): Promise<City | null> {
+// Devuelve todas las coincidencias; elegir cuál se guarda es trabajo de la UI.
+export async function searchCities(query: string): Promise<City[]> {
   const params = new URLSearchParams({
     name: query,
-    count: "1",
+    count: String(GEOCODING_RESULTS),
     language: "es",
     format: "json",
   });
   const data = await fetchJson<GeocodingResponse>(`${GEOCODING_URL}?${params}`);
-  const [result] = data.results ?? [];
-  if (!result) return null;
 
-  return {
+  return (data.results ?? []).map((result) => ({
     id: result.id,
     name: result.name,
     region: result.admin1 ?? null,
     country: result.country ?? null,
     latitude: result.latitude,
     longitude: result.longitude,
-  };
+  }));
 }
 
 export async function getCurrentWeather(city: City, unit: Unit): Promise<Weather> {

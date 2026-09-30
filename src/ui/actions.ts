@@ -1,4 +1,4 @@
-import { getCurrentWeather, geocodeCity } from "../api/openMeteo.ts";
+import { getCurrentWeather, searchCities } from "../api/openMeteo.ts";
 import { describeWeatherCode } from "../api/weatherCodes.ts";
 import {
   addCity,
@@ -90,16 +90,23 @@ async function searchAndAddCity({ config, ask }: AppContext): Promise<Config | n
     return null;
   }
 
-  const city = await geocodeCity(query);
-  if (!city) {
+  const matches = await searchCities(query);
+  if (matches.length === 0) {
     printError(`No se encontró ninguna ciudad para "${query}".`);
     return null;
   }
 
-  if (hasCity(config, city.id)) {
-    printWarn(`${formatCityLabel(city)} ya está en la lista.`);
+  // Las coincidencias ya guardadas no son accionables: no las ofrecemos para elegir.
+  const available = matches.filter((city) => !hasCity(config, city.id));
+  if (available.length === 0) {
+    printWarn(describeAlreadySaved(matches));
     return null;
   }
+
+  // Con una sola coincidencia no hay nada que desambiguar: se agrega directo.
+  const city =
+    available.length === 1 ? available[0] : await pickCity(available, ask, "  Número de la ciudad: ");
+  if (!city) return null;
 
   const becomesDefault = config.defaultCityId === null;
   const suffix = becomesDefault ? colors.dim(" como ciudad default") : "";
@@ -113,7 +120,7 @@ async function deleteCity({ config, ask }: AppContext): Promise<Config | null> {
     return null;
   }
 
-  const city = await pickCity(config, ask, "  Número a eliminar: ");
+  const city = await pickCity(config.cities, ask, "  Número a eliminar: ", config.defaultCityId);
   if (!city) return null;
 
   const updated = removeCity(config, city.id);
@@ -128,7 +135,7 @@ async function chooseDefaultCity({ config, ask }: AppContext): Promise<Config | 
     return null;
   }
 
-  const city = await pickCity(config, ask, "  Número como ciudad default: ");
+  const city = await pickCity(config.cities, ask, "  Número como ciudad default: ", config.defaultCityId);
   if (!city) return null;
 
   if (city.id === config.defaultCityId) {
@@ -146,14 +153,29 @@ async function adjustSettings({ config }: AppContext): Promise<Config> {
   return updated;
 }
 
-async function pickCity(config: Config, ask: Prompter, question: string): Promise<City | null> {
+// Lista numerada + pregunta por un número. defaultId solo pinnela la etiqueta
+// "(default)"; en la lista de candidatos del geocoding no hay ninguna.
+async function pickCity(
+  cities: City[],
+  ask: Prompter,
+  question: string,
+  defaultId: number | null = null,
+): Promise<City | null> {
   console.log();
-  console.log(formatCityChoices(config).join("\n"));
+  console.log(formatCityChoices(cities, defaultId).join("\n"));
   console.log();
 
-  const index = await askIndex(ask, question, config.cities.length);
+  const index = await askIndex(ask, question, cities.length);
   if (index === null) return null;
-  return config.cities[index] ?? null;
+  return cities[index] ?? null;
+}
+
+function describeAlreadySaved(matches: City[]): string {
+  if (matches.length === 1) {
+    const [only] = matches;
+    if (only) return `${formatCityLabel(only)} ya está en la lista.`;
+  }
+  return `Las ${matches.length} coincidencias ya están en la lista.`;
 }
 
 function announceNewDefault(config: Config, removedId: number): void {

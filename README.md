@@ -19,7 +19,7 @@ El objetivo de esta aplicación es que creemos una aplicación de consola que pi
 2. Paso 2: OpenMeteo API.
 
 ```
-https://geocoding-api.open-meteo.com/v1/search?name=Ottawa&count=1&language=es&format=json
+https://geocoding-api.open-meteo.com/v1/search?name=Ottawa&count=5&language=es&format=json
 https://api.open-meteo.com/v1/forecast?latitude=45.41117&longitude=-75.69812&current=temperature_2m
 ```
 
@@ -46,6 +46,14 @@ Esta es la apariencia que deseamos crear
 ════════════════════════════════════════
   Selecciona una opción: 5
 ```
+
+### Buscar ciudades
+
+El geocoding devuelve hasta 5 coincidencias. La app las lista numeradas con sus
+coordenadas para que elijas la correcta, ya que hay nombres repetidos
+("Springfield" existe en Missouri, Illinois, Massachusetts, Ohio y Tennessee; y
+"Morelia" aparece tres veces en Chiapas). Si solo hay una coincidencia, se agrega
+sin preguntar, y las ciudades que ya guardaste se filtran de la lista.
 
 ### Colores
 
