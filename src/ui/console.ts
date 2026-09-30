@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline";
 import type { Config } from "../types.ts";
+import { colors } from "./colors.ts";
 import { formatUnit } from "./format.ts";
 
 const SEPARATOR = "═".repeat(40);
@@ -58,28 +59,42 @@ export function createPrompter(): PrompterFactory {
 }
 
 export function printSeparator(): void {
-  console.log(SEPARATOR);
+  console.log(colors.dim(SEPARATOR));
 }
 
 export function printBanner(): void {
   printSeparator();
-  console.log(`${TITLE_INDENT}${TITLE}`);
+  console.log(colors.cyan(colors.bold(`${TITLE_INDENT}${TITLE}`)));
   printSeparator();
 }
 
+function menuOption(option: string, label: string): string {
+  return `  ${colors.cyan(`${option}.`)} ${label}`;
+}
+
 export function printMenu(config: Config): void {
-  console.log("  1. Clima de ciudad default");
-  console.log(`  2. Clima de todas las ciudades (${config.cities.length})`);
-  console.log("  3. Buscar y agregar ciudad");
-  console.log("  4. Eliminar ciudad");
-  console.log("  5. Establecer ciudad default");
-  console.log(`  8. Ajustes (${formatUnit(config.unit)})`);
-  console.log("  9. Salir");
+  console.log(menuOption("1", "Clima de ciudad default"));
+  console.log(menuOption("2", `Clima de todas las ciudades (${config.cities.length})`));
+  console.log(menuOption("3", "Buscar y agregar ciudad"));
+  console.log(menuOption("4", "Eliminar ciudad"));
+  console.log(menuOption("5", "Establecer ciudad default"));
+  console.log(menuOption("8", `Ajustes (${formatUnit(config.unit)})`));
+  console.log(menuOption("9", "Salir"));
   printSeparator();
 }
 
 export function printError(message: string): void {
-  console.error(`  ${message}`);
+  console.error(`  ${colors.red(message)}`);
+}
+
+// Aviso recuperable: la acción no se completó, pero no es un fallo (p. ej. la
+// ciudad ya estaba en la lista).
+export function printWarn(message: string): void {
+  console.log(`  ${colors.yellow(message)}`);
+}
+
+export function printSuccess(message: string): void {
+  console.log(`  ${colors.green(message)}`);
 }
 
 // Valida que la respuesta sea un índice dentro del rango abierto. null = el
@@ -90,7 +105,7 @@ export async function askIndex(ask: Prompter, question: string, total: number): 
 
   const parsed = Number.parseInt(answer, 10);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > total) {
-    printError(`Ingresa un número entre 1 y ${total}.`);
+    printWarn(`Ingresa un número entre 1 y ${total}.`);
     return null;
   }
   return parsed - 1;

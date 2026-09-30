@@ -1,5 +1,6 @@
 import { loadConfig, saveConfig } from "./src/services/configStore.ts";
 import { ACTIONS, describeError } from "./src/ui/actions.ts";
+import { colors } from "./src/ui/colors.ts";
 import { createPrompter, printBanner, printError, printMenu } from "./src/ui/console.ts";
 
 const EXIT_OPTION = "9";
@@ -36,7 +37,7 @@ async function main(): Promise<void> {
     close();
   }
 
-  console.log("  Hasta luego.\n");
+  console.log(`  ${colors.dim("Hasta luego.")}\n`);
 }
 
 await main();

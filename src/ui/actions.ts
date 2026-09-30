@@ -9,8 +9,9 @@ import {
   toggleUnit,
 } from "../services/cityService.ts";
 import type { City, Config } from "../types.ts";
-import { askIndex, printError, printSeparator } from "./console.ts";
+import { askIndex, printError, printSeparator, printSuccess, printWarn } from "./console.ts";
 import type { Prompter } from "./console.ts";
+import { colors } from "./colors.ts";
 import {
   formatCityChoices,
   formatCityLabel,
@@ -40,7 +41,7 @@ async function showDefaultWeather({ config }: AppContext): Promise<null> {
 
   const weather = await getCurrentWeather(city, config.unit);
   printSeparator();
-  console.log(`  ${formatCityLabel(city)} · ${weather.timeZoneAbbreviation}`);
+  console.log(`  ${formatCityLabel(city)} ${colors.dim("·")} ${colors.dim(weather.timeZoneAbbreviation)}`);
   console.log(formatWeatherBlock(weather));
   printSeparator();
   return null;
@@ -48,7 +49,7 @@ async function showDefaultWeather({ config }: AppContext): Promise<null> {
 
 async function showAllWeather({ config }: AppContext): Promise<null> {
   if (config.cities.length === 0) {
-    printError(NO_CITIES_MESSAGE);
+    printWarn(NO_CITIES_MESSAGE);
     return null;
   }
 
@@ -61,7 +62,7 @@ async function showAllWeather({ config }: AppContext): Promise<null> {
   const labelWidth = measureLabelWidth(labels);
 
   printSeparator();
-  console.log(`  Clima actual · ${formatUnit(config.unit)}\n`);
+  console.log(`  ${colors.cyan("Clima actual")} ${colors.dim(`· ${formatUnit(config.unit)}`)}\n`);
   results.forEach((result, index) => {
     const label = labels[index];
     if (label === undefined) return;
@@ -72,7 +73,8 @@ async function showAllWeather({ config }: AppContext): Promise<null> {
         formatWeatherRow(label, formatTemperature(weather), describeWeatherCode(weather.weatherCode), labelWidth),
       );
     } else {
-      console.log(formatWeatherRow(label, "—", `Error: ${describeError(result.reason)}`, labelWidth));
+      const failure = colors.red(`Error: ${describeError(result.reason)}`);
+      console.log(formatWeatherRow(label, "—", failure, labelWidth));
     }
   });
   printSeparator();
@@ -95,18 +97,19 @@ async function searchAndAddCity({ config, ask }: AppContext): Promise<Config | n
   }
 
   if (hasCity(config, city.id)) {
-    printError(`${formatCityLabel(city)} ya está en la lista.`);
+    printWarn(`${formatCityLabel(city)} ya está en la lista.`);
     return null;
   }
 
   const becomesDefault = config.defaultCityId === null;
-  console.log(`  ${formatCityLabel(city)} agregada${becomesDefault ? " como ciudad default" : ""}.`);
+  const suffix = becomesDefault ? colors.dim(" como ciudad default") : "";
+  printSuccess(`${formatCityLabel(city)} agregada${suffix}.`);
   return addCity(config, city);
 }
 
 async function deleteCity({ config, ask }: AppContext): Promise<Config | null> {
   if (config.cities.length === 0) {
-    printError(NO_CITIES_MESSAGE);
+    printWarn(NO_CITIES_MESSAGE);
     return null;
   }
 
@@ -114,14 +117,14 @@ async function deleteCity({ config, ask }: AppContext): Promise<Config | null> {
   if (!city) return null;
 
   const updated = removeCity(config, city.id);
-  console.log(`  ${formatCityLabel(city)} eliminada.`);
+  printSuccess(`${formatCityLabel(city)} eliminada.`);
   announceNewDefault(updated, city.id);
   return updated;
 }
 
 async function chooseDefaultCity({ config, ask }: AppContext): Promise<Config | null> {
   if (config.cities.length === 0) {
-    printError(NO_CITIES_MESSAGE);
+    printWarn(NO_CITIES_MESSAGE);
     return null;
   }
 
@@ -129,17 +132,17 @@ async function chooseDefaultCity({ config, ask }: AppContext): Promise<Config | 
   if (!city) return null;
 
   if (city.id === config.defaultCityId) {
-    printError(`${formatCityLabel(city)} ya es la ciudad default.`);
+    printWarn(`${formatCityLabel(city)} ya es la ciudad default.`);
     return null;
   }
 
-  console.log(`  ${formatCityLabel(city)} es ahora la ciudad default.`);
+  printSuccess(`${formatCityLabel(city)} es ahora la ciudad default.`);
   return setDefaultCity(config, city.id);
 }
 
 async function adjustSettings({ config }: AppContext): Promise<Config> {
   const updated = toggleUnit(config);
-  console.log(`  Unidad de temperatura: ${formatUnit(updated.unit)}.`);
+  printSuccess(`Unidad de temperatura: ${formatUnit(updated.unit)}.`);
   return updated;
 }
 
@@ -156,11 +159,11 @@ async function pickCity(config: Config, ask: Prompter, question: string): Promis
 function announceNewDefault(config: Config, removedId: number): void {
   const city = defaultCity(config);
   if (!city) {
-    console.log("  Ya no queda ninguna ciudad default.");
+    printWarn("Ya no queda ninguna ciudad default.");
     return;
   }
   if (removedId === config.defaultCityId) {
-    console.log(`  Nueva ciudad default: ${formatCityLabel(city)}.`);
+    printSuccess(`Nueva ciudad default: ${formatCityLabel(city)}.`);
   }
 }
 

@@ -46,3 +46,17 @@ Esta es la apariencia que deseamos crear
 ════════════════════════════════════════
   Selecciona una opción: 5
 ```
+
+### Colores
+
+| Elemento | Color |
+| --- | --- |
+| Banner y menú | cyan |
+| Separadores y "Hasta luego" | dim |
+| Temperatura | yellow |
+| Confirmaciones (ciudad agregada/eliminada, unidad) | green |
+| Avisos (ya está en la lista, índice inválido) | yellow |
+| Errores | red |
+
+Los colores se desactivan solos cuando la salida no es una terminal (por ejemplo al
+pipear a un archivo). `NO_COLOR` los desactiva siempre y `FORCE_COLOR` los fuerza.
