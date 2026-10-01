@@ -16,14 +16,27 @@ interface Stub {
 export function stubFetch(...responses: Array<Response | (() => Response)>): Stub {
   const queue = [...responses];
   const urls: string[] = [];
-  let last = queue.pop();
+  // La última SERVIDA, no la última encolada: es lo que se repite al agotarse la cola.
+  let lastServed: Response | undefined;
 
   const handler = async (input: string | URL | Request): Promise<Response> => {
     urls.push(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
-    const next = queue.shift() ?? last;
-    if (!next) throw new Error("stubFetch: no hay respuestas encoladas");
-    last = next;
-    return typeof next === "function" ? next() : next;
+
+    const next = queue.shift();
+    if (next) {
+      lastServed = typeof next === "function" ? next() : next;
+    } else if (!lastServed) {
+      throw new Error("stubFetch: no hay respuestas encoladas");
+    }
+
+    // clone() y no la respuesta tal cual: un body de Response se lee una sola vez, así
+    // que repetir el mismo objeto hacía fallar la segunda petición con "Body already
+    // used". Clonar da un body nuevo por llamada y preserva status y headers.
+    //
+    // El cast es por los tipos de bun: `clone()` está declarado con el Response de
+    // undici y no con el global. El mismo `as unknown as typeof fetch` de abajo ya
+    // depende de que ambos sean el mismo objeto en runtime.
+    return lastServed.clone() as unknown as Response;
   };
 
   globalThis.fetch = handler as unknown as typeof fetch;

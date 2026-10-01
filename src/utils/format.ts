@@ -21,7 +21,9 @@ export function formatUnit(unit: Unit): string {
 
 // Etiqueta compacta: la trunca la tabla de clima, así que no lleva coordenadas.
 export function formatCityLabel(city: City): string {
-  return [city.name, city.region, city.country].filter((part) => part !== null).join(", ");
+  // Truthy y no `!== null`: parseCity ya normaliza a null, pero un undefined que se
+  // colara por otra ruta imprimiría un hueco en la etiqueta.
+  return [city.name, city.region, city.country].filter((part): part is string => Boolean(part)).join(", ");
 }
 
 // Etiqueta detallada para los selectores: geocoding devuelve lugares distintos con
