@@ -15,8 +15,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # El typecheck y los tests tienen que pasar antes de crear el tag: si no, un push a
+  # main roto publicaría binarios y el tag quedaría marcado como-released.
+  verify:
+    name: Typecheck and tests
+    uses: ./.github/workflows/ci.yml
+
   tag:
     name: Resolve version and tag
+    needs: verify
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}

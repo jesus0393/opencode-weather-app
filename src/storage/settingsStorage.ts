@@ -12,7 +12,11 @@ const VALID_UNITS: Unit[] = ["celsius", "fahrenheit"];
 // sigue siendo legible cuando le sumemos otra preferencia.
 export function parseUnit(raw: unknown): Unit {
   const candidate = (typeof raw === "object" && raw !== null ? raw : {}) as { unit?: unknown };
-  return VALID_UNITS.includes(candidate.unit as Unit) ? (candidate.unit as Unit) : "celsius";
+  return isUnit(candidate.unit) ? candidate.unit : "celsius";
+}
+
+function isUnit(value: unknown): value is Unit {
+  return typeof value === "string" && (VALID_UNITS as string[]).includes(value);
 }
 
 // Un archivo corrupto o ausente no debe impedir arrancar: caemos a Celsius.

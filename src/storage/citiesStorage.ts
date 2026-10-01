@@ -20,25 +20,48 @@ function emptyCities(): CitiesFile {
   return { cities: [], defaultCityId: null };
 }
 
-function isCity(value: unknown): value is City {
-  if (typeof value !== "object" || value === null) return false;
+// El archivo es editable a mano, así que validamos en vez de castear a ciegas: una
+// ciudad con `region: 42` o `country: true` se descarta, no se propaga como si fuera
+// un string. `region` y `country` ausentes se normalizan a null en vez de quedar
+// `undefined`, que era lo que terminaba imprimiendo una etiqueta con huecos.
+function parseCity(value: unknown): City | null {
+  if (typeof value !== "object" || value === null) return null;
 
-  const candidate = value as Partial<City>;
-  return (
-    typeof candidate.id === "number" &&
-    typeof candidate.name === "string" &&
-    typeof candidate.latitude === "number" &&
-    typeof candidate.longitude === "number"
-  );
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate["id"] !== "number" || typeof candidate["name"] !== "string") return null;
+  if (typeof candidate["latitude"] !== "number" || typeof candidate["longitude"] !== "number") return null;
+
+  const region = optionalText(candidate["region"]);
+  const country = optionalText(candidate["country"]);
+  if (region === undefined || country === undefined) return null;
+
+  return {
+    id: candidate["id"],
+    name: candidate["name"],
+    region,
+    country,
+    latitude: candidate["latitude"],
+    longitude: candidate["longitude"],
+  };
 }
 
-// El archivo es editable a mano, así que validamos en vez de castear a ciegas.
+// null = presente y válido; undefined = presente pero del tipo equivocado.
+function optionalText(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return null;
+  return typeof value === "string" ? value : undefined;
+}
+
 // `defaultCityId` se re-resuelve: puede apuntar a una ciudad que ya no está.
 export function parseCities(raw: unknown): CitiesFile {
   if (typeof raw !== "object" || raw === null) return emptyCities();
 
   const candidate = raw as Partial<CitiesFile>;
-  const cities = Array.isArray(candidate.cities) ? candidate.cities.filter(isCity) : [];
+  const cities = Array.isArray(candidate.cities)
+    ? candidate.cities.flatMap((entry) => {
+        const city = parseCity(entry);
+        return city ? [city] : [];
+      })
+    : [];
   const preferredId = typeof candidate.defaultCityId === "number" ? candidate.defaultCityId : null;
 
   return { cities, defaultCityId: resolveDefaultCityId(cities, preferredId) };

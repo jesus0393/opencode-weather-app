@@ -54,6 +54,26 @@ describe("parseCities", () => {
     expect(parseCities({ cities: [bare], defaultCityId: null }).cities).toEqual([bare]);
   });
 
+  // Los opcionales ausentes se normalizan a null. Sin esto quedaban `undefined`, que
+  // formatCityLabel no filtraba y terminaba en una etiqueta con huecos: "Ottawa, , ".
+  test("los opcionales ausentes se normalizan a null", () => {
+    const parsed = parseCities({ cities: [{ id: 1, name: "Ottawa", latitude: 45.4, longitude: -75.7 }] });
+    expect(parsed.cities[0]).toEqual({ id: 1, name: "Ottawa", region: null, country: null, latitude: 45.4, longitude: -75.7 });
+  });
+
+  // El archivo es editable a pulso: un campo con el tipo equivocado descarta la
+  // ciudad en vez de propagarse como si fuera un string.
+  test("una región o un país del tipo equivocado descarta la ciudad", () => {
+    const bad: unknown[] = [
+      { id: 1, name: "Ottawa", region: 42, latitude: 45.4, longitude: -75.7 },
+      { id: 1, name: "Ottawa", country: true, latitude: 45.4, longitude: -75.7 },
+      { id: 1, name: "Ottawa", region: ["Ontario"], latitude: 45.4, longitude: -75.7 },
+    ];
+    for (const entry of bad) {
+      expect(parseCities({ cities: [entry], defaultCityId: 1 }).cities).toEqual([]);
+    }
+  });
+
   test("los campos extra del archivo se ignoran", () => {
     expect(parseCities({ cities: [ottawa], defaultCityId: 123, unit: "fahrenheit" })).toEqual({
       cities: [ottawa],

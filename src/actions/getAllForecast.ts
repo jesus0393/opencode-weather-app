@@ -1,11 +1,11 @@
 import { getDailyForecast } from "../api/weather.ts";
-import type { AppContext } from "../types/MenuOption.ts";
+import { printForecast } from "../presentation/forecast.ts";
 import { withLoading } from "../presentation/loading.ts";
-import { describeError } from "../utils/errors.ts";
 import { printSeparator, printWarn } from "../presentation/output.ts";
+import type { AppContext } from "../types/MenuOption.ts";
 import { colors } from "../utils/colors.ts";
+import { describeError } from "../utils/errors.ts";
 import { formatCityLabel } from "../utils/format.ts";
-import { printForecast } from "./getForecast.ts";
 import { NO_CITIES_MESSAGE, describeCities } from "./messages.ts";
 
 export async function showAllForecast({ config }: AppContext): Promise<null> {
